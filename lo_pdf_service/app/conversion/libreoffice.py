@@ -21,7 +21,7 @@ class LibreOfficeConverter:
             "--headless",
             "--nologo",
             "--nofirststartwizard",
-            f"--env:UserInstallation={profile_dir.as_uri()}",
+            f"-env:UserInstallation={profile_dir.as_uri()}",
             "--convert-to",
             "pdf",
             "--outdir",

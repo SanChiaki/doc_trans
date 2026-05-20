@@ -21,7 +21,7 @@ def test_libreoffice_uses_isolated_profile_and_validates_output(
 
     def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         assert "--headless" in command
-        assert f"--env:UserInstallation={profile_dir.as_uri()}" in command
+        assert f"-env:UserInstallation={profile_dir.as_uri()}" in command
         assert str(input_file) in command
         (output_dir / "input.pdf").write_bytes(b"%PDF-1.4\n%fake\n")
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
