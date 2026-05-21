@@ -24,6 +24,7 @@ async def create_conversion(
     execution: ExecutionMode = Form(default=ExecutionMode.SYNC),
     email_mode: EmailMode = Form(default=EmailMode.MERGED),
     include_attachments: bool = Form(default=True),
+    spreadsheet_fit_each_sheet_to_one_page: bool = Form(default=False),
     timeout_seconds: int | None = Form(default=None),
     settings: Settings = Depends(get_settings_dependency),
     service: object = Depends(get_conversion_service),
@@ -48,6 +49,7 @@ async def create_conversion(
     options = ConversionOptions(
         email_mode=email_mode,
         include_attachments=include_attachments,
+        spreadsheet_fit_each_sheet_to_one_page=spreadsheet_fit_each_sheet_to_one_page,
         timeout_seconds=timeout_seconds,
         max_email_attachment_bytes=settings.max_email_attachment_bytes,
         max_attachments=settings.max_attachments,

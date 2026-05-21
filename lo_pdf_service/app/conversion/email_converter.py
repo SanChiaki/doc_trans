@@ -12,7 +12,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 import extract_msg
 
-from app.conversion.detector import FileCategory, detect_file_type
+from app.conversion.detector import FileCategory, detect_file_type, is_spreadsheet_file
 from app.conversion.image_converter import image_to_pdf
 from app.conversion.manifest import AttachmentRecord, ConversionManifest
 from app.conversion.pdf_ops import merge_pdfs, validate_pdf
@@ -247,6 +247,9 @@ class EmailConverter:
                         input_file=input_path,
                         output_dir=attachments_dir,
                         profile_dir=profile_dir,
+                        fit_spreadsheet_sheets_to_one_page=(
+                            options.spreadsheet_fit_each_sheet_to_one_page and is_spreadsheet_file(filename)
+                        ),
                     )
                     if converted != output_path:
                         converted.replace(output_path)

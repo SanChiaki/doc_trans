@@ -13,7 +13,23 @@ from app.models import ConversionOptions, EmailMode, OutputKind
 
 
 class FakeOfficeConverter:
-    def convert_to_pdf(self, *, input_file: Path, output_dir: Path, profile_dir: Path) -> Path:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def convert_to_pdf(
+        self,
+        *,
+        input_file: Path,
+        output_dir: Path,
+        profile_dir: Path,
+        fit_spreadsheet_sheets_to_one_page: bool = False,
+    ) -> Path:
+        self.calls.append(
+            {
+                "input_file": input_file,
+                "fit_spreadsheet_sheets_to_one_page": fit_spreadsheet_sheets_to_one_page,
+            }
+        )
         output = output_dir / f"{input_file.stem}.pdf"
         writer = PdfWriter()
         writer.add_blank_page(width=72, height=72)
@@ -133,3 +149,37 @@ def test_msg_parser_path_is_used_for_msg_files(tmp_path: Path, monkeypatch: pyte
     assert result.output_kind == OutputKind.ZIP
     with ZipFile(result.output_path) as archive:
         assert "attachments/notes.pdf" in set(archive.namelist())
+
+
+def test_email_spreadsheet_attachment_uses_single_page_sheet_option(tmp_path: Path) -> None:
+    source = tmp_path / "message.eml"
+    output_dir = tmp_path / "out"
+    profile_dir = tmp_path / "profile"
+    message = EmailMessage()
+    message["From"] = "sender@example.com"
+    message["To"] = "receiver@example.com"
+    message["Subject"] = "Spreadsheet"
+    message.set_content("See attachment")
+    message.add_attachment(
+        b"fake xlsx",
+        maintype="application",
+        subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename="report.xlsx",
+    )
+    source.write_bytes(message.as_bytes())
+    output_dir.mkdir()
+    profile_dir.mkdir()
+
+    office_converter = FakeOfficeConverter()
+    converter = EmailConverter(office_converter=office_converter)
+    converter.convert(
+        input_file=source,
+        output_dir=output_dir,
+        profile_dir=profile_dir,
+        options=ConversionOptions(spreadsheet_fit_each_sheet_to_one_page=True),
+    )
+
+    attachment_calls = [
+        call for call in office_converter.calls if Path(str(call["input_file"])).name == "report.xlsx"
+    ]
+    assert attachment_calls[0]["fit_spreadsheet_sheets_to_one_page"] is True

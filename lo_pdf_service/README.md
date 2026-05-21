@@ -29,12 +29,26 @@ curl -F "execution=sync" -F "email_mode=merged" -F "file=@sample.docx" \
   http://localhost:8000/v1/conversions --output result.pdf
 ```
 
+Spreadsheet conversion with each sheet scaled to one PDF page:
+
+```bash
+curl -F "execution=sync" -F "spreadsheet_fit_each_sheet_to_one_page=true" -F "file=@sample.xlsx" \
+  http://localhost:8000/v1/conversions --output result.pdf
+```
+
 Asynchronous conversion:
 
 ```bash
 curl -F "execution=async" -F "email_mode=split" -F "file=@message.eml" \
   http://localhost:8000/v1/conversions
 ```
+
+### Form Options
+
+- `execution`: `sync` or `async`.
+- `email_mode`: `merged` or `split`.
+- `include_attachments`: include convertible email attachments when true.
+- `spreadsheet_fit_each_sheet_to_one_page`: for spreadsheet inputs and spreadsheet email attachments, scales each sheet to one PDF page.
 
 ## WSL Validation
 

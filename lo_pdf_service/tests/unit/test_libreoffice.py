@@ -35,6 +35,38 @@ def test_libreoffice_uses_isolated_profile_and_validates_output(
     assert result == output_dir / "input.pdf"
 
 
+def test_libreoffice_uses_single_page_sheets_export_option_when_requested(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    input_file = tmp_path / "input.xlsx"
+    output_dir = tmp_path / "out"
+    profile_dir = tmp_path / "profile"
+    input_file.write_bytes(b"fake")
+    output_dir.mkdir()
+    profile_dir.mkdir()
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        convert_to_index = command.index("--convert-to")
+        assert command[convert_to_index + 1] == (
+            'pdf:calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":"true"}}'
+        )
+        (output_dir / "input.pdf").write_bytes(b"%PDF-1.4\n%fake\n")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr("app.conversion.libreoffice.validate_pdf", lambda path: None)
+
+    converter = LibreOfficeConverter(soffice_binary="soffice", timeout_seconds=10)
+    result = converter.convert_to_pdf(
+        input_file=input_file,
+        output_dir=output_dir,
+        profile_dir=profile_dir,
+        fit_spreadsheet_sheets_to_one_page=True,
+    )
+
+    assert result == output_dir / "input.pdf"
+
+
 def test_libreoffice_timeout_maps_to_app_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     input_file = tmp_path / "input.docx"
     output_dir = tmp_path / "out"

@@ -38,6 +38,7 @@ OFFICE_EXTENSIONS = {
     "html",
     "htm",
 }
+SPREADSHEET_EXTENSIONS = {"xls", "xlsx", "xlsm", "xlt", "xltx", "csv", "tsv", "ods"}
 PDF_EXTENSIONS = {"pdf"}
 EMAIL_EXTENSIONS = {"eml", "msg"}
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"}
@@ -65,3 +66,7 @@ def detect_file_type(filename: str) -> DetectedFile:
         message="Unsupported file type.",
         details={"filename": filename, "extension": suffix},
     )
+
+
+def is_spreadsheet_file(filename: str) -> bool:
+    return Path(filename).suffix.lower().lstrip(".") in SPREADSHEET_EXTENSIONS

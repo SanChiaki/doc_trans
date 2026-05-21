@@ -6,13 +6,24 @@ from pathlib import Path
 from app.conversion.pdf_ops import validate_pdf
 from app.core.errors import AppError, ErrorCode
 
+SPREADSHEET_SINGLE_PAGE_EXPORT_FILTER = (
+    'pdf:calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":"true"}}'
+)
+
 
 class LibreOfficeConverter:
     def __init__(self, *, soffice_binary: str, timeout_seconds: int) -> None:
         self.soffice_binary = soffice_binary
         self.timeout_seconds = timeout_seconds
 
-    def convert_to_pdf(self, *, input_file: Path, output_dir: Path, profile_dir: Path) -> Path:
+    def convert_to_pdf(
+        self,
+        *,
+        input_file: Path,
+        output_dir: Path,
+        profile_dir: Path,
+        fit_spreadsheet_sheets_to_one_page: bool = False,
+    ) -> Path:
         output_dir.mkdir(parents=True, exist_ok=True)
         profile_dir.mkdir(parents=True, exist_ok=True)
         expected_output = output_dir / f"{input_file.stem}.pdf"
@@ -23,7 +34,7 @@ class LibreOfficeConverter:
             "--nofirststartwizard",
             f"-env:UserInstallation={profile_dir.as_uri()}",
             "--convert-to",
-            "pdf",
+            SPREADSHEET_SINGLE_PAGE_EXPORT_FILTER if fit_spreadsheet_sheets_to_one_page else "pdf",
             "--outdir",
             str(output_dir),
             str(input_file),

@@ -24,6 +24,7 @@ class OutputKind(StrEnum):
 class ConversionOptions:
     email_mode: EmailMode = EmailMode.MERGED
     include_attachments: bool = True
+    spreadsheet_fit_each_sheet_to_one_page: bool = False
     timeout_seconds: int | None = None
     max_email_attachment_bytes: int | None = None
     max_attachments: int | None = None

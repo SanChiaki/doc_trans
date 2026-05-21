@@ -14,9 +14,13 @@ from app.models import ConversionOptions, ConversionResult, OutputKind
 
 
 class FakeService:
+    def __init__(self) -> None:
+        self.options: list[ConversionOptions] = []
+
     def convert(
         self, *, input_file: Path, source_filename: str, options: ConversionOptions, workspace_id: str | None = None
     ) -> ConversionResult:
+        self.options.append(options)
         result = input_file.parent / "result.pdf"
         writer = PdfWriter()
         writer.add_blank_page(width=72, height=72)
@@ -42,6 +46,27 @@ def test_sync_conversion_returns_pdf(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
+    app.dependency_overrides.clear()
+
+
+def test_api_accepts_spreadsheet_single_page_option(tmp_path: Path) -> None:
+    service = FakeService()
+    app.dependency_overrides[get_conversion_service] = lambda: service
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/conversions",
+        data={
+            "execution": "sync",
+            "email_mode": "merged",
+            "include_attachments": "true",
+            "spreadsheet_fit_each_sheet_to_one_page": "true",
+        },
+        files={"file": ("input.xlsx", b"fake", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    )
+
+    assert response.status_code == 200
+    assert service.options[0].spreadsheet_fit_each_sheet_to_one_page is True
     app.dependency_overrides.clear()
 
 

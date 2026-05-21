@@ -4,7 +4,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from app.conversion.detector import FileCategory, detect_file_type
+from app.conversion.detector import FileCategory, detect_file_type, is_spreadsheet_file
 from app.conversion.email_converter import EmailConverter
 from app.conversion.image_converter import image_to_pdf
 from app.conversion.pdf_ops import validate_pdf
@@ -36,6 +36,9 @@ class ConversionService:
                 input_file=source_path,
                 output_dir=workspace.output_dir,
                 profile_dir=workspace.profile_dir,
+                fit_spreadsheet_sheets_to_one_page=(
+                    options.spreadsheet_fit_each_sheet_to_one_page and is_spreadsheet_file(source_filename)
+                ),
             )
             return ConversionResult(
                 output_path=pdf,
