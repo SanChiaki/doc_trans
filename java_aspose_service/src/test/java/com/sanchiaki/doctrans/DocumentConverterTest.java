@@ -29,6 +29,18 @@ class DocumentConverterTest {
         assertEquals("email", adapter.calledFamily);
     }
 
+    @Test
+    void passesExcelOnePagePerSheetOptionToExcelConverter() throws Exception {
+        FakeAsposeAdapter adapter = new FakeAsposeAdapter();
+        DocumentConverter converter = new DocumentConverter(adapter);
+
+        byte[] pdf = converter.convert(Path.of("sample.xlsx"), "sample.xlsx", new ConversionOptions(true));
+
+        assertArrayEquals("excel-pdf".getBytes(), pdf);
+        assertEquals("excel", adapter.calledFamily);
+        assertEquals(true, adapter.excelOptions.excelOnePagePerSheet());
+    }
+
     static class FakeAsposeAdapter implements AsposeAdapter {
         String calledFamily;
 
@@ -38,9 +50,12 @@ class DocumentConverterTest {
             return "word-pdf".getBytes();
         }
 
+        ConversionOptions excelOptions;
+
         @Override
-        public byte[] convertExcel(Path source) {
+        public byte[] convertExcel(Path source, ConversionOptions options) {
             calledFamily = "excel";
+            excelOptions = options;
             return "excel-pdf".getBytes();
         }
 

@@ -12,6 +12,7 @@ Unlike Aspose Python via .NET, the Java products can be loaded together in one J
 - `POST /api/v1/convert`
   - multipart field `file`
   - form field `response_mode`: `stream` or `file`
+  - form field `excel_one_page_per_sheet`: `true`, `1`, or `yes` to fit each Excel sheet into one PDF page for `.xls`/`.xlsx`/`.xlsm`
 - `GET /api/v1/files/{file_id}`
 
 ## Run In WSL

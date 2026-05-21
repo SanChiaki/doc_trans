@@ -2,6 +2,7 @@ package com.sanchiaki.doctrans;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
@@ -16,9 +17,24 @@ class AsposeAdapterIntegrationTest {
         JavaAsposeAdapter adapter = new JavaAsposeAdapter();
 
         assertPdf(adapter.convertWord(createDocx()));
-        assertPdf(adapter.convertExcel(createXlsx()));
+        assertPdf(adapter.convertExcel(createXlsx(), ConversionOptions.defaults()));
         assertPdf(adapter.convertPresentation(createPptx()));
         assertPdf(adapter.convertEmail(createEml()));
+    }
+
+    @Test
+    void convertsEachExcelSheetToOnePdfPageWhenRequested() throws Exception {
+        JavaAsposeAdapter adapter = new JavaAsposeAdapter();
+        Path workbook = createWideXlsx();
+
+        byte[] defaultPdf = adapter.convertExcel(workbook, ConversionOptions.defaults());
+        byte[] singlePagePdf = adapter.convertExcel(workbook, new ConversionOptions(true));
+
+        int defaultPages = countPdfPages(defaultPdf);
+        int singlePagePages = countPdfPages(singlePagePdf);
+
+        assertTrue(defaultPages > singlePagePages);
+        assertTrue(singlePagePages <= 2);
     }
 
     private Path createDocx() throws Exception {
@@ -34,6 +50,19 @@ class AsposeAdapterIntegrationTest {
         Path path = tempDir.resolve("sample.xlsx");
         com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
         workbook.getWorksheets().get(0).getCells().get("A1").putValue("Java Aspose verification");
+        workbook.save(path.toString());
+        return path;
+    }
+
+    private Path createWideXlsx() throws Exception {
+        Path path = tempDir.resolve("wide.xlsx");
+        com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
+        com.aspose.cells.Cells cells = workbook.getWorksheets().get(0).getCells();
+        for (int row = 0; row < 80; row++) {
+            for (int column = 0; column < 25; column++) {
+                cells.get(row, column).putValue("cell-" + row + "-" + column + "-wide-text");
+            }
+        }
         workbook.save(path.toString());
         return path;
     }
@@ -67,5 +96,10 @@ class AsposeAdapterIntegrationTest {
     private void assertPdf(byte[] bytes) {
         assertTrue(bytes.length > 0);
         assertTrue(bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F');
+    }
+
+    private int countPdfPages(byte[] pdf) throws Exception {
+        com.aspose.pdf.Document document = new com.aspose.pdf.Document(new ByteArrayInputStream(pdf));
+        return document.getPages().size();
     }
 }

@@ -80,14 +80,47 @@ class HttpServiceTest {
         }
     }
 
+    @Test
+    void convertPassesExcelSinglePageOption() throws Exception {
+        int port = freePort();
+        FakeAsposeAdapter adapter = new FakeAsposeAdapter();
+        DocumentConversionServer server = new DocumentConversionServer(port, tempDir, new DocumentConverter(adapter));
+        server.start();
+        try {
+            byte[] body = multipart("sample.xlsx", "source".getBytes(StandardCharsets.UTF_8), "stream", "true");
+            HttpURLConnection connection = (HttpURLConnection) new URL("http://127.0.0.1:" + port + "/api/v1/convert").openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=test-boundary");
+            try (OutputStream output = connection.getOutputStream()) {
+                output.write(body);
+            }
+
+            assertEquals(200, connection.getResponseCode());
+            assertPdf(connection.getInputStream().readAllBytes());
+            assertTrue(adapter.excelOptions.excelOnePagePerSheet());
+        } finally {
+            server.stop();
+        }
+    }
+
     private static byte[] multipart(String filename, byte[] fileBytes) {
         return multipart(filename, fileBytes, "stream");
     }
 
     private static byte[] multipart(String filename, byte[] fileBytes, String responseMode) {
+        return multipart(filename, fileBytes, responseMode, null);
+    }
+
+    private static byte[] multipart(String filename, byte[] fileBytes, String responseMode, String excelOnePagePerSheet) {
+        String optionPart = excelOnePagePerSheet == null ? "" : ""
+                + "--test-boundary\r\n"
+                + "Content-Disposition: form-data; name=\"excel_one_page_per_sheet\"\r\n\r\n"
+                + excelOnePagePerSheet + "\r\n";
         byte[] prefix = ("--test-boundary\r\n"
                 + "Content-Disposition: form-data; name=\"response_mode\"\r\n\r\n"
                 + responseMode + "\r\n"
+                + optionPart
                 + "--test-boundary\r\n"
                 + "Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n"
                 + "Content-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8);
@@ -120,8 +153,11 @@ class HttpServiceTest {
             return "%PDF fake".getBytes(StandardCharsets.UTF_8);
         }
 
+        ConversionOptions excelOptions = ConversionOptions.defaults();
+
         @Override
-        public byte[] convertExcel(Path source) {
+        public byte[] convertExcel(Path source, ConversionOptions options) {
+            excelOptions = options;
             return "%PDF fake".getBytes(StandardCharsets.UTF_8);
         }
 

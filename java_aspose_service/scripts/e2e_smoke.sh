@@ -31,7 +31,12 @@ public class MakeSamples {
     doc.save(dir.resolve("sample.docx").toString());
 
     com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
-    workbook.getWorksheets().get(0).getCells().get("A1").putValue("Java Aspose service verification");
+    com.aspose.cells.Cells cells = workbook.getWorksheets().get(0).getCells();
+    for (int row = 0; row < 40; row++) {
+      for (int column = 0; column < 15; column++) {
+        cells.get(row, column).putValue("Java Aspose service verification " + row + "-" + column);
+      }
+    }
     workbook.save(dir.resolve("sample.xlsx").toString());
 
     com.aspose.slides.Presentation presentation = new com.aspose.slides.Presentation();
@@ -87,10 +92,18 @@ cases = ["sample.docx", "sample.xlsx", "sample.pptx", "sample.eml"]
 for filename in cases:
     boundary = "----java-aspose-e2e-" + filename.replace(".", "-")
     source = Path("${E2E_DIR}", filename).read_bytes()
+    excel_options = []
+    if filename.endswith(".xlsx"):
+        excel_options = [
+            f"--{boundary}\\r\\n".encode(),
+            b'Content-Disposition: form-data; name="excel_one_page_per_sheet"\\r\\n\\r\\n',
+            b"true\\r\\n",
+        ]
     body = b"".join([
         f"--{boundary}\\r\\n".encode(),
         b'Content-Disposition: form-data; name="response_mode"\\r\\n\\r\\n',
         b"stream\\r\\n",
+        *excel_options,
         f"--{boundary}\\r\\n".encode(),
         f'Content-Disposition: form-data; name="file"; filename="{filename}"\\r\\n'.encode(),
         b"Content-Type: application/octet-stream\\r\\n\\r\\n",

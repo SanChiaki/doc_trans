@@ -14,10 +14,15 @@ public class JavaAsposeAdapter implements AsposeAdapter {
     }
 
     @Override
-    public byte[] convertExcel(Path source) throws Exception {
+    public byte[] convertExcel(Path source, ConversionOptions options) throws Exception {
         com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook(source.toString());
+        com.aspose.cells.PdfSaveOptions saveOptions = new com.aspose.cells.PdfSaveOptions();
+        if (options.excelOnePagePerSheet()) {
+            fitEachWorksheetToSinglePage(workbook);
+            saveOptions.setOnePagePerSheet(true);
+        }
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        workbook.save(output, com.aspose.cells.SaveFormat.PDF);
+        workbook.save(output, saveOptions);
         return output.toByteArray();
     }
 
@@ -42,6 +47,15 @@ public class JavaAsposeAdapter implements AsposeAdapter {
             return convertWord(mhtml);
         } finally {
             Files.deleteIfExists(mhtml);
+        }
+    }
+
+    private void fitEachWorksheetToSinglePage(com.aspose.cells.Workbook workbook) {
+        for (int index = 0; index < workbook.getWorksheets().getCount(); index++) {
+            com.aspose.cells.PageSetup pageSetup = workbook.getWorksheets().get(index).getPageSetup();
+            pageSetup.setPercentScale(false);
+            pageSetup.setFitToPagesWide(1);
+            pageSetup.setFitToPagesTall(1);
         }
     }
 }

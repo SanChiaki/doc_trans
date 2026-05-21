@@ -69,7 +69,7 @@ public class DocumentConversionServer {
             Files.write(source, request.fileBytes);
             byte[] pdf;
             try {
-                pdf = converter.convert(source, request.filename);
+                pdf = converter.convert(source, request.filename, ConversionOptions.fromFields(request.fields));
             } finally {
                 Files.deleteIfExists(source);
             }
