@@ -37,6 +37,15 @@ class AsposeAdapterIntegrationTest {
         assertTrue(singlePagePages <= 2);
     }
 
+    @Test
+    void keepsExcelTextSelectableWhenSinglePageModeIsRequested() throws Exception {
+        JavaAsposeAdapter adapter = new JavaAsposeAdapter();
+
+        byte[] pdf = adapter.convertExcel(createWideXlsx(), new ConversionOptions(true));
+
+        assertTrue(extractPdfText(pdf).contains("cell-0-0-wide-text"));
+    }
+
     private Path createDocx() throws Exception {
         Path path = tempDir.resolve("sample.docx");
         com.aspose.words.Document document = new com.aspose.words.Document();
@@ -101,5 +110,11 @@ class AsposeAdapterIntegrationTest {
     private int countPdfPages(byte[] pdf) throws Exception {
         com.aspose.pdf.Document document = new com.aspose.pdf.Document(new ByteArrayInputStream(pdf));
         return document.getPages().size();
+    }
+
+    private String extractPdfText(byte[] pdf) throws Exception {
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            return new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+        }
     }
 }

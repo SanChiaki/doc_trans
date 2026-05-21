@@ -19,7 +19,6 @@ public class JavaAsposeAdapter implements AsposeAdapter {
         com.aspose.cells.PdfSaveOptions saveOptions = new com.aspose.cells.PdfSaveOptions();
         if (options.excelOnePagePerSheet()) {
             fitEachWorksheetToSinglePage(workbook);
-            saveOptions.setOnePagePerSheet(true);
         }
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         workbook.save(output, saveOptions);
